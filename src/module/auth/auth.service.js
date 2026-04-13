@@ -7,11 +7,13 @@ import ApiError from "../../common/utils/ApiError.js";
 import {
   generateRefreshToken,
   generateAccessToken,
+  verifyRefreshToken,
 } from "../../common/utils/jwt.utils.js";
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
 };
+
 const generateRefreshAndAccessToken = (payload) => {
   const refreshToken = generateRefreshToken(payload);
   const accessToken = generateAccessToken(payload);
@@ -82,4 +84,74 @@ const loginServices = async ({ email, password }) => {
 
   return { userObj, accessToken, refreshToken };
 };
-export { registerService, verifyEmailService, loginServices };
+
+const logoutService = async ({ id }) => {
+  if (!id) {
+    throw ApiError.badRequest("U should be login to logout");
+  }
+  const user = await User.findById(id).select("+refreshToken");
+  if (!user) {
+    throw ApiError.badRequest(
+      "No login user with id -- check the login middleware",
+    );
+  }
+  console.log("UESR :- ", user);
+  user.refreshToken = undefined;
+  await user.save();
+
+  return user;
+};
+
+const getMeServices = async ({ id }) => {
+  if (!id) {
+    throw ApiError.badRequest("Plese login first ");
+  }
+  const user = await User.findById(id);
+  if (!user) {
+    throw ApiError.badRequest("User not exist ");
+  }
+
+  return user;
+};
+
+const refreshTokensServises = async (refreshToken) => {
+  if (!refreshToken) {
+    throw ApiError.badRequest("Refresh Token missing");
+  }
+  const decodeToken = await verifyRefreshToken(refreshToken);
+  if (!decodeToken) {
+    throw ApiError.badRequest("refreshed Token expoired or Wrong !");
+  }
+  const user = await User.findById(decodeToken.id).select("+refreshToken");
+  if (!user) {
+    throw ApiError.unauthorized("User no longer exists");
+  }
+  const isMatch = hashToken(refreshToken) === user.refreshToken;
+  if (!isMatch) {
+    throw ApiError.conflict("Refresh Token Does not match ");
+  }
+
+  const { refreshToken: newRefreshToken, accessToken: newAccessToken } =
+    generateRefreshAndAccessToken(user);
+  if (!newRefreshToken || !newAccessToken) {
+    throw ApiError.badRequest(
+      "Unable to generate refresh Token and access token",
+    );
+  }
+
+  user.refreshToken = hashToken(newRefreshToken);
+  await user.save();
+  const userObj = user.toObject();
+  delete userObj.refreshToken;
+
+  return { userObj, newAccessToken, newRefreshToken };
+};
+
+export {
+  registerService,
+  verifyEmailService,
+  loginServices,
+  getMeServices,
+  logoutService,
+  refreshTokensServises,
+};

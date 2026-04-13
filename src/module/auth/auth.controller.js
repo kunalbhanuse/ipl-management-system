@@ -25,7 +25,7 @@ const verifyEmail = async (req, res) => {
     const verifiedUser = await authService.verifyEmailService(req.query);
     return ApiResponse.ok(res, "Email Verified SuccefullY !", verifiedUser);
   } catch (error) {
-    res.status(error.statusCode || 500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Server internal error",
     });
@@ -48,11 +48,58 @@ const login = async (req, res) => {
       user: userObj,
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Internal server error",
     });
   }
 };
 
-export { register, login, verifyEmail };
+const logout = async (req, res) => {
+  try {
+    const user = await authService.logoutService(req.user);
+    res.clearCookie("refreshToken");
+    return ApiResponse.ok(res, "Logout Succefully !", user);
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+const getMe = async (req, res) => {
+  try {
+    const user = await authService.getMeServices(req.user);
+
+    return ApiResponse.ok(res, "user feached Succefully ", user);
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message || "internal server error",
+    });
+  }
+};
+
+const refreshTokens = async (req, res) => {
+  // console.log("req.cookies.refreshToken =", req.cookies.refreshToken);
+  try {
+    const { userObj, newAccessToken, newRefreshToken } =
+      await authService.refreshTokensServises(req.cookies.refreshToken);
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: false,
+    });
+
+    return ApiResponse.ok(res, "Access token revised Succesfully", {
+      userObj,
+      newAccessToken,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+export { register, login, verifyEmail, getMe, logout, refreshTokens };
