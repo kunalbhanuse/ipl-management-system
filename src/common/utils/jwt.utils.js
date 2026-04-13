@@ -2,14 +2,14 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
 const generateRefreshToken = (payload) => {
-  return jwt.sign({ id: payload.id }, process.env.REFRESH_TOKEN_SECRET, {
+  return jwt.sign({ id: payload._id }, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
   });
 };
 
 const generateAccessToken = (payload) => {
   return jwt.sign(
-    { id: payload.id, role: payload.role },
+    { id: payload._id, role: payload.role },
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,

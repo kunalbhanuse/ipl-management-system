@@ -4,6 +4,19 @@ import { generateResetToken } from "../../common/utils/jwt.utils.js";
 import verifyEmailTemplate from "./templates/verifyEmail.templates.js";
 import crypto from "crypto";
 import ApiError from "../../common/utils/ApiError.js";
+import {
+  generateRefreshToken,
+  generateAccessToken,
+} from "../../common/utils/jwt.utils.js";
+
+const hashToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+const generateRefreshAndAccessToken = (payload) => {
+  const refreshToken = generateRefreshToken(payload);
+  const accessToken = generateAccessToken(payload);
+  return { refreshToken, accessToken };
+};
 
 const registerService = async ({ name, email, password, role }) => {
   const { rawToken, hashedToken } = await generateResetToken();
@@ -28,10 +41,7 @@ const verifyEmailService = async ({ token }) => {
   if (!token) {
     throw ApiError.notFound("Token not Found");
   }
-  const hashIncomingToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const hashIncomingToken = hashToken(token);
 
   const user = await User.findOne({
     emailVerificationToken: hashIncomingToken,
@@ -49,4 +59,27 @@ const verifyEmailService = async ({ token }) => {
   return user;
 };
 
-export { registerService, verifyEmailService };
+const loginServices = async ({ email, password }) => {
+  const user = await User.findOne({ email }).select("+password");
+  if (!user) {
+    throw ApiError.badRequest("User Does not Exits with this email");
+  }
+  if (!user.isVerified) {
+    throw ApiError.forbidden("Verify email before Login");
+  }
+  const isPasswordMatch = await user.comparePassword(password);
+  if (!isPasswordMatch) {
+    throw ApiError.badRequest("Email or password Wrong");
+  }
+
+  const { refreshToken, accessToken } = generateRefreshAndAccessToken(user);
+
+  user.refreshToken = hashToken(refreshToken);
+  await user.save();
+  const userObj = user.toObject();
+  delete userObj.password;
+  delete userObj.refreshToken;
+
+  return { userObj, accessToken, refreshToken };
+};
+export { registerService, verifyEmailService, loginServices };

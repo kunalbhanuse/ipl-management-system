@@ -33,7 +33,26 @@ const verifyEmail = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const validateReqBody = await validateLogin.parseAsync(req.body);
+  try {
+    const validateReqBody = await validateLogin.parseAsync(req.body);
+
+    const { userObj, accessToken, refreshToken } =
+      await authService.loginServices(validateReqBody);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+    });
+
+    return ApiResponse.ok(res, "login SucceFull", {
+      accessToken,
+      user: userObj,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
 };
 
 export { register, login, verifyEmail };
