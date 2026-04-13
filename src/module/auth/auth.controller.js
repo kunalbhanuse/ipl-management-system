@@ -1,6 +1,8 @@
 import * as authService from "./auth.service.js";
 import { validateRegister } from "./dto/register.dto.js";
 import { validateLogin } from "./dto/login.dto.js";
+import { validateForgetPassword } from "./dto/forgetPassword.dto.js";
+import { validateResetPassword } from "./dto/resetPassword.dto.js";
 import ApiResponse from "../../common/utils/ApiResponse.js";
 import ApiError from "../../common/utils/ApiError.js";
 import { success } from "zod";
@@ -102,4 +104,39 @@ const refreshTokens = async (req, res) => {
     });
   }
 };
-export { register, login, verifyEmail, getMe, logout, refreshTokens };
+
+const forgetPassword = async (req, res) => {
+  try {
+    const validateReqBody = await validateForgetPassword.parseAsync(req.body);
+    const message = await authService.forgetPasswordService(validateReqBody);
+    return ApiResponse.ok(res, "Forget password mail sent", message);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const validateReqBody = await validateResetPassword.parseAsync(req.body);
+    await authService.resetPasswordService(validateReqBody);
+    return ApiResponse.ok(res, "Password reset Successfully !");
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+export {
+  register,
+  login,
+  verifyEmail,
+  getMe,
+  logout,
+  refreshTokens,
+  forgetPassword,
+  resetPassword,
+};

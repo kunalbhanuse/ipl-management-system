@@ -10,5 +10,7 @@ authRouter.post("/login", authController.login);
 authRouter.post("/logout", isLoggedIn, authController.logout);
 authRouter.get("/getMe", isLoggedIn, authController.getMe);
 authRouter.post("/refreshTokens", authController.refreshTokens);
+authRouter.post("/forgetPassword", authController.forgetPassword);
+authRouter.put("/resetPassword", authController.resetPassword);
 
 export default authRouter;

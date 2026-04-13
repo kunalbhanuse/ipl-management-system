@@ -21,7 +21,7 @@ const generateRefreshAndAccessToken = (payload) => {
 };
 
 const registerService = async ({ name, email, password, role }) => {
-  const { rawToken, hashedToken } = await generateResetToken();
+  const { rawToken, hashedToken } = generateResetToken();
   const user = await User.create({
     name,
     email,
@@ -146,6 +146,53 @@ const refreshTokensServises = async (refreshToken) => {
 
   return { userObj, newAccessToken, newRefreshToken };
 };
+const forgetPasswordService = async ({ email }) => {
+  if (!email) {
+    throw ApiError.badRequest("Email should be there");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw ApiError.badRequest("email  not registered ");
+  }
+  const { rawToken, hashedToken } = generateResetToken();
+
+  user.forgetPasswordToken = hashedToken;
+  user.forgetPasswordExpires = Date.now() + 15 * 60 * 1000;
+  await user.save();
+
+  try {
+    const resetLink = `http://localhost:8000/api/auth/resetPassword?token=${rawToken}`;
+    await sendMail(user.email, "Forget Password Reset link", resetLink);
+  } catch (error) {
+    console.error("Failed to send reset email:", err.message);
+  }
+
+  return "forget password mail sent";
+};
+
+const resetPasswordService = async ({ token, password }) => {
+  if (!token || !password) {
+    throw ApiError.badRequest("Token and password is required !");
+  }
+  const resetPasswordToken = hashToken(token);
+  const user = await User.findOne({
+    forgetPasswordToken: resetPasswordToken,
+    forgetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw ApiError.badRequest("forget password token expired or wrong !");
+  }
+  user.password = password;
+  user.forgetPasswordToken = undefined;
+  user.forgetPasswordExpires = undefined;
+  await user.save();
+
+  const userObj = user.toObject();
+  delete userObj.password;
+  return userObj;
+};
 
 export {
   registerService,
@@ -154,4 +201,6 @@ export {
   getMeServices,
   logoutService,
   refreshTokensServises,
+  forgetPasswordService,
+  resetPasswordService,
 };
