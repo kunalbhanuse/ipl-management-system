@@ -20,7 +20,7 @@ const isLoggedIn = async (req, res, next) => {
       throw ApiError.unauthorized("User not Found");
     }
     req.user = user;
-    console.log(req.user);
+
     next();
   } catch (error) {
     return res.status(401).json({
@@ -30,4 +30,18 @@ const isLoggedIn = async (req, res, next) => {
   }
 };
 
-export { isLoggedIn };
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      throw ApiError.unauthorized("Login required");
+    }
+    if (!roles.includes(req.user.role)) {
+      throw ApiError.forbidden(
+        "You do not have permission to perform this action",
+      );
+    }
+    next();
+  };
+};
+
+export { isLoggedIn, authorize };

@@ -4,11 +4,7 @@ import { generateResetToken } from "../../common/utils/jwt.utils.js";
 import verifyEmailTemplate from "./templates/verifyEmail.templates.js";
 import crypto from "crypto";
 import ApiError from "../../common/utils/ApiError.js";
-import {
-  generateRefreshToken,
-  generateAccessToken,
-  verifyRefreshToken,
-} from "../../common/utils/jwt.utils.js";
+import {generateRefreshToken,generateAccessToken,verifyRefreshToken,} from "../../common/utils/jwt.utils.js";
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
