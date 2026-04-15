@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Team from "./team.model.js";
 import Owner from "../owner/owner.model.js";
 import ApiError from "../../common/utils/ApiError.js";
