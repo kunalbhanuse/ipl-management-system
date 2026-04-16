@@ -32,6 +32,7 @@ const isLoggedIn = async (req, res, next) => {
 
 const authorize = (...roles) => {
   return (req, res, next) => {
+    // console.log("REQ USER:", req.user);
     if (!req.user) {
       throw ApiError.unauthorized("Login required");
     }
