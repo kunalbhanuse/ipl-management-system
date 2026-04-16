@@ -6,5 +6,9 @@ const sponsorRouter = Router();
 sponsorRouter.use(isLoggedIn, authorize("SPONSOR"));
 
 sponsorRouter.post("/register", sponserController.register);
+sponsorRouter.get("/getAllSponsor", sponserController.getAllSponsors);
+sponsorRouter.get("/getSponsor/:id", sponserController.getSponsor);
+sponsorRouter.put("/update/:id", sponserController.updateSponsor);
+sponsorRouter.delete("/delete/:id", sponserController.deleteSponsor);
 
 export default sponsorRouter;

@@ -8,6 +8,7 @@ const sponsorSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
       maxlength: 100,
+      unique: true,
     },
   },
   { timestamps: true },
