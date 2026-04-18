@@ -4,7 +4,7 @@ import * as brodcasterController from "./brodcaster.controller.js";
 
 const brodcasterRouter = Router();
 
-brodcasterRouter.use(isLoggedIn, authorize("BROADCASTER"));
+brodcasterRouter.use(isLoggedIn, authorize("OWNER"));
 
 brodcasterRouter.post("/register", brodcasterController.register);
 brodcasterRouter.get(
@@ -18,4 +18,5 @@ brodcasterRouter.get(
 brodcasterRouter.put("/update/:id", brodcasterController.updateBrodcaster);
 brodcasterRouter.delete("/delete/:id", brodcasterController.deleteBrodcaster);
 
-export { brodcasterRouter };
+export default brodcasterRouter;
+brodcasterRouter;
